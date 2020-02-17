@@ -1,36 +1,58 @@
 package com.example.urlshortener;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
 public class UrlController {
 
-    @GetMapping("/")
-    public String hello(){
-        return "Hello World";
+//    @Autowired
+    private UrlRepository urlRepository;
+
+    @GetMapping("/{code}")
+    public String get(@PathVariable String code)
+    {
+        return "You entered "+code;
+//        return urlRepository.findByCode(code).getUrl();
     }
 
     @PostMapping("/shorten")
     public String UrlShorten(@RequestParam(value = "url")String url){
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(url.getBytes(StandardCharsets.UTF_8));
-            BigInteger number = new BigInteger(1, hash);
-            String code = number.toString(36);
-            code = code.substring(0,8);
-            return code;
+        int url_char_limit=7; //maximum character limit of url
+        int radix=62;
+        long maximum= (long) Math.pow(radix,url_char_limit); //generate what can be max value of combination
+        long random = ThreadLocalRandom.current().nextLong(1000000,maximum);
+        String code= CodeGeneration(random);
+//        return code;
+//        UrlDetails obj= new UrlDetails();
+//        obj.setUrl(url);
+//        obj.setCode(code);
+//        urlRepository.save(obj);
+        return code;
+    }
+
+    //This method converts long to Base62
+    private String CodeGeneration(long number)
+    {
+        String dict="0123456789"+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+"abcdefghijklmnopqrstuvwxyz"; //maintain different digit that are possible
+        StringBuilder code=new StringBuilder();
+
+        //logic to convert to Base62
+        while(number>0)
+        {
+            int digit= (int)(number %62);
+            number=number/62;
+            char c= dict.charAt(digit);
+            code.append(c);
         }
-        catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        return code.reverse().toString();
     }
 
 }
