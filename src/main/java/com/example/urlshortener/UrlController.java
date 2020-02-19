@@ -3,24 +3,17 @@ package com.example.urlshortener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
 public class UrlController {
 
-//    @Autowired
-    private UrlRepository urlRepository;
-
+     @Autowired
+     UrlDetailsRepository urlDetailsRepository;
     @GetMapping("/{code}")
     public String get(@PathVariable String code)
     {
-        return "You entered "+code;
-//        return urlRepository.findByCode(code).getUrl();
+        return urlDetailsRepository.findByCode(code).getUrl();
     }
 
     @PostMapping("/shorten")
@@ -30,18 +23,17 @@ public class UrlController {
         long maximum= (long) Math.pow(radix,url_char_limit); //generate what can be max value of combination
         long random = ThreadLocalRandom.current().nextLong(1000000,maximum);
         String code= CodeGeneration(random);
-//        return code;
-//        UrlDetails obj= new UrlDetails();
-//        obj.setUrl(url);
-//        obj.setCode(code);
-//        urlRepository.save(obj);
+        UrlDetails obj= new UrlDetails();
+        obj.setUrl(url);
+        obj.setCode(code);
+        urlDetailsRepository.save(obj);
         return code;
     }
 
     //This method converts long to Base62
     private String CodeGeneration(long number)
     {
-        String dict="0123456789"+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+"abcdefghijklmnopqrstuvwxyz"; //maintain different digit that are possible
+        final String dict="0123456789"+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+"abcdefghijklmnopqrstuvwxyz"; //maintain different digit that are possible
         StringBuilder code=new StringBuilder();
 
         //logic to convert to Base62
