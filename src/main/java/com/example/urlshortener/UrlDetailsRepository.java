@@ -7,6 +7,7 @@ import java.util.List;
 @Repository
 public interface UrlDetailsRepository extends JpaRepository<UrlDetails, Long> {
     UrlDetails findByCode(String code);
+    UrlDetails findByUrl(String url);
     List<UrlDetails> findAll();
     UrlDetails save(UrlDetails obj);
 }
