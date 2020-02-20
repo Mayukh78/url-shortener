@@ -3,8 +3,6 @@ package com.example.urlshortener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 @RestController
 public class UrlController {
 
@@ -27,48 +25,29 @@ public class UrlController {
          if(urlDetails != null)
              return urlDetails.getCode();
 
-         String code;
+         CodeDetails shortenedCode = new CodeDetails();
          String custom_code = requestDetails.getCustom_code();
+
          //check if custom code exist
          if (urlDetailsRepository.findByCode(custom_code) != null)
              return "Custom Code exists,please try another custom code";
          //if no custom code was provided
          else if(custom_code.equals("NONE")) {
-             int code_char_limit = 7; //maximum character limit of shortened_code
-             int radix = 62;
-             long maximum = (long) Math.pow(radix, code_char_limit); //generate what can be max value of combination
-             long random = ThreadLocalRandom.current().nextLong(1000000, maximum);
-             code = CodeGeneration(random);
+             shortenedCode.codeGeneration(); //this generate a random code
+             String code= shortenedCode.getCode();
              while (urlDetailsRepository.findByCode(code) != null) {
-                 random = ThreadLocalRandom.current().nextLong(1000000, maximum);
-                 code = CodeGeneration(random);
+                 shortenedCode.codeGeneration();
+                 code = shortenedCode.getCode();
              }
          }
          else
-             code=custom_code;
+             shortenedCode.setCode(custom_code);
 
          UrlDetails obj = new UrlDetails();
          obj.setUrl(requestDetails.getUrl());
-         obj.setCode(code);
+         obj.setCode(shortenedCode.getCode());
          urlDetailsRepository.save(obj);
-         return code;
-    }
-
-    //This method converts long to Base62
-    private String CodeGeneration(long number)
-    {
-        final String dict="0123456789"+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+"abcdefghijklmnopqrstuvwxyz"; //maintain different digits that are possible
-        StringBuilder code=new StringBuilder();
-
-        //logic to convert to Base62
-        while(number>0)
-        {
-            int digit= (int)(number %62);
-            number=number/62;
-            char c= dict.charAt(digit);
-            code.append(c);
-        }
-        return code.reverse().toString();
+         return shortenedCode.getCode();
     }
 
 }
